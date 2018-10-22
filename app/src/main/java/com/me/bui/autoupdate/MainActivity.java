@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
 import static android.content.Intent.ACTION_INSTALL_PACKAGE;
 
 public class MainActivity extends AppCompatActivity {
-    private final String APK_URL = "https://github.com/EmpireCTF/empirectf/blob/master/writeups/2018-06-19-SCTF/files/simple.apk";
+    private final String APK_URL = "https://github.com/maobui/new_version/blob/master/apk/sample.apk";
 
     Button btnInstallApk;
     @Override
@@ -40,24 +41,28 @@ public class MainActivity extends AppCompatActivity {
         btnInstallApk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                installApkFile("HardwareEventLMU_release_v1.1.2_181022.apk");
+                installApkFile("sample.apk");
             }
         });
     }
 
-    private void installApkFile(String fileApk) {
-        File newApk = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/"  + fileApk);
-//        newApk.setReadable(true, false);
+    private void installApkFile(String filename) {
+        File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/"  + filename);
+        if(!f.exists()) {
+            Toast.makeText(this, "No file exists !!!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+//        f.setReadable(true, false);
         Intent intent = new Intent();
         Uri uri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            uri = FileProvider.getUriForFile(this,BuildConfig.APPLICATION_ID + ".provider",  newApk);
+            uri = FileProvider.getUriForFile(this,BuildConfig.APPLICATION_ID + ".provider",  f);
             intent.setAction(Intent.ACTION_INSTALL_PACKAGE);
 //            intent.setAction(Intent.ACTION_VIEW);
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true);
         } else {
-            uri = Uri.fromFile(newApk);
+            uri = Uri.fromFile(f);
             intent.setAction(Intent.ACTION_VIEW);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         }
