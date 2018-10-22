@@ -35,6 +35,7 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <service android:name=".DownloadService"/>
     </application>
 
 </manifest>

@@ -4,14 +4,13 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.PowerManager;
-import android.os.StrictMode;
+import android.os.ResultReceiver;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,9 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
-
-import static android.content.Intent.ACTION_INSTALL_PACKAGE;
 
 public class MainActivity extends AppCompatActivity {
     private final String APK_URL = "https://github.com/maobui/new_version/raw/master/apk/sample.apk";
@@ -36,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
     Button btnInstallApk;
     Button btnDownload;
+    Button btnDownloadService;
+    ProgressDialog mProgressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +46,14 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         btnInstallApk = findViewById(R.id.btnInstallApk);
         btnDownload = findViewById(R.id.btnDownload);
+        btnDownloadService = findViewById(R.id.btnDownloadService);
+
+        // instantiate it within the onCreate method
+        mProgressDialog = new ProgressDialog(MainActivity.this);
+        mProgressDialog.setMessage("A message");
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setCancelable(true);
 
         btnInstallApk.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -59,7 +65,14 @@ public class MainActivity extends AppCompatActivity {
         btnDownload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dowloadApk(APK_URL);
+                downloadApk(APK_URL);
+            }
+        });
+
+        btnDownloadService.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                downloadApkViaService(APK_URL, APK_NAME);
             }
         });
     }
@@ -89,17 +102,7 @@ public class MainActivity extends AppCompatActivity {
         this.finish();
     }
 
-    // declare the dialog as a member field of your activity
-    ProgressDialog mProgressDialog;
-
-    private void dowloadApk(String apk_url) {
-
-        // instantiate it within the onCreate method
-        mProgressDialog = new ProgressDialog(MainActivity.this);
-        mProgressDialog.setMessage("A message");
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mProgressDialog.setCancelable(true);
+    private void downloadApk(String apk_url) {
 
         // execute this when the downloader must be fired
         final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
@@ -210,6 +213,34 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(context,"Download error: "+result, Toast.LENGTH_LONG).show();
             else
                 Toast.makeText(context,"File downloaded", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void downloadApkViaService(String url, String filename) {
+        // this is how you fire the downloader
+        mProgressDialog.show();
+        Intent intent = new Intent(this, DownloadService.class);
+        intent.putExtra("url", url);
+        intent.putExtra("filename", filename);
+        intent.putExtra("receiver", new DownloadReceiver(new Handler()));
+        startService(intent);
+    }
+
+    private class DownloadReceiver extends ResultReceiver {
+        public DownloadReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+            super.onReceiveResult(resultCode, resultData);
+            if (resultCode == DownloadService.UPDATE_PROGRESS) {
+                int progress = resultData.getInt("progress");
+                mProgressDialog.setProgress(progress);
+                if (progress == 100) {
+                    mProgressDialog.dismiss();
+                }
+            }
         }
     }
 }
