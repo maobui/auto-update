@@ -27,18 +27,21 @@ public class DownloadService extends IntentService {
         String urlToDownload = intent.getStringExtra("url");
         String filename = intent.getStringExtra("filename");
         ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra("receiver");
+        InputStream input = null;
+        OutputStream output = null;
+        HttpURLConnection connection = null;
         try {
             URL url = new URL(urlToDownload);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.connect();
             // this will be useful so that you can show a typical 0-100% progress bar
             int fileLength = connection.getContentLength();
 
             // download the file
-            InputStream input = new BufferedInputStream(connection.getInputStream());
-            OutputStream output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);
+            input = new BufferedInputStream(connection.getInputStream());
+            output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);
 
-            byte data[] = new byte[1024];
+            byte data[] = new byte[4096];
             long total = 0;
             int count;
             while ((count = input.read(data)) != -1) {
@@ -50,11 +53,22 @@ public class DownloadService extends IntentService {
                 output.write(data, 0, count);
             }
 
-            output.flush();
-            output.close();
-            input.close();
+//            output.flush();
+//            output.close();
+//            input.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (output != null)
+                    output.close();
+                if (input != null)
+                    input.close();
+            } catch (IOException ignored) {
+            }
+
+            if (connection != null)
+                connection.disconnect();
         }
 
         Bundle resultData = new Bundle();

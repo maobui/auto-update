@@ -24,4 +24,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Download via service" />
+
+    <Button
+        android:id="@+id/btnDownloadManager"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Download Manager" />
 </LinearLayout>

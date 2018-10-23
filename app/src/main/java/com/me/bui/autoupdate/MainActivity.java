@@ -1,5 +1,6 @@
 package com.me.bui.autoupdate;
 
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnInstallApk;
     Button btnDownload;
     Button btnDownloadService;
+    Button btnDownloadManager;
     ProgressDialog mProgressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         btnInstallApk = findViewById(R.id.btnInstallApk);
         btnDownload = findViewById(R.id.btnDownload);
         btnDownloadService = findViewById(R.id.btnDownloadService);
+        btnDownloadManager = findViewById(R.id.btnDownloadManager);
 
         // instantiate it within the onCreate method
         mProgressDialog = new ProgressDialog(MainActivity.this);
@@ -73,6 +76,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 downloadApkViaService(APK_URL, APK_NAME);
+            }
+        });
+
+        btnDownloadManager.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                downloadWithDownloadManager(APK_URL, APK_NAME);
             }
         });
     }
@@ -222,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, DownloadService.class);
         intent.putExtra("url", url);
         intent.putExtra("filename", filename);
-        intent.putExtra("receiver", new DownloadReceiver(new Handler()));
+        intent.putExtra("receiver", new  DownloadReceiver(new Handler()));
         startService(intent);
     }
 
@@ -242,5 +252,30 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+
+    private void downloadWithDownloadManager(String url, String apk_name) {
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+        request.setDescription("Some descrition");
+        request.setTitle("Some title");
+        // in order for this if to run, you must use the android 3.2 to compile your app
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            request.allowScanningByMediaScanner();
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        }
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, apk_name);
+
+        // get download service and enqueue file
+        DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+        manager.enqueue(request);
+    }
+
+    public static boolean isDownloadManagerAvailable(Context context) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            return true;
+        }
+        return false;
     }
 }
