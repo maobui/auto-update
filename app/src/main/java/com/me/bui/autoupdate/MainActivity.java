@@ -246,6 +246,8 @@ public class MainActivity extends AppCompatActivity {
             super.onReceiveResult(resultCode, resultData);
             if (resultCode == DownloadService.UPDATE_PROGRESS) {
                 int progress = resultData.getInt("progress");
+                mProgressDialog.setIndeterminate(false);
+                mProgressDialog.setMax(100);
                 mProgressDialog.setProgress(progress);
                 if (progress == 100) {
                     mProgressDialog.dismiss();

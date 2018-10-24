@@ -41,13 +41,13 @@ public class DownloadService extends IntentService {
             input = new BufferedInputStream(connection.getInputStream());
             output = new FileOutputStream(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + filename);
 
+            Bundle resultData = new Bundle();
             byte data[] = new byte[4096];
             long total = 0;
             int count;
             while ((count = input.read(data)) != -1) {
                 total += count;
                 // publishing the progress....
-                Bundle resultData = new Bundle();
                 resultData.putInt("progress" ,(int) (total * 100 / fileLength));
                 receiver.send(UPDATE_PROGRESS, resultData);
                 output.write(data, 0, count);
